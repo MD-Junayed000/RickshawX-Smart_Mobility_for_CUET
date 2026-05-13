@@ -1,12 +1,12 @@
-import React from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
-import NotFound from './pages/NotFound';
-import Login from './components/Auth/Login';
-import Register from './components/Auth/Register';
-import ProtectedRoute from './components/ProtectedRoute';
+import React from "react";
+import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
+import Login from "./components/Auth/Login";
+import Register from "./components/Auth/Register";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function Navbar() {
   const { isLoggedIn, logout, user } = useAuth();
@@ -19,17 +19,17 @@ function Navbar() {
       <div>
         {isLoggedIn ? (
           <>
-            <span style={{ color: '#ffe082', marginRight: '16px' }}>
-              Welcome, {user?.name || 'User'}!
+            <span style={{ color: "#ffe082", marginRight: "16px" }}>
+              Welcome, {user?.name || "User"}!
             </span>
             <Link to="/dashboard">Dashboard</Link>
-            <button 
+            <button
               onClick={logout}
-              style={{ 
-                background: 'transparent', 
-                color: '#fff', 
-                border: '1px solid #fff',
-                marginLeft: '16px'
+              style={{
+                background: "transparent",
+                color: "#fff",
+                border: "1px solid #fff",
+                marginLeft: "16px",
               }}
             >
               Logout
@@ -57,13 +57,13 @@ function AppContent() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
           <Route path="*" element={<NotFound />} />
         </Routes>

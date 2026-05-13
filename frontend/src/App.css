@@ -1,9 +1,10 @@
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
   color: #333;
-  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)), 
-              url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)),
+    url("/frontend/public/Cuet_gate.jpeg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -55,20 +56,25 @@ nav a:hover {
   color: #ffe082;
   background: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
-  }
+}
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   color: #2d6cdf;
   margin-top: 0;
   font-weight: 600;
-  }
+}
 
 h1 {
   font-size: 2.5rem;
   margin-bottom: 1rem;
 }
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   font-family: inherit;
   font-size: 1rem;
   border-radius: 8px;
@@ -103,7 +109,9 @@ button:disabled {
   box-shadow: none;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   border-color: #2d6cdf;
   box-shadow: 0 0 0 3px rgba(45, 108, 223, 0.1);
 }
@@ -180,7 +188,9 @@ input:focus, select:focus, textarea:focus {
   line-height: 1.5;
 }
 
-input[type="text"], input[type="password"], input[type="email"] {
+input[type="text"],
+input[type="password"],
+input[type="email"] {
   width: 100%;
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.9);
@@ -233,25 +243,104 @@ input[type="text"], input[type="password"], input[type="email"] {
   color: #721c24;
 }
 
+.status-accepted {
+  background: rgba(33, 150, 243, 0.1);
+  color: #1976d2;
+  border: 1px solid #2196f3;
+}
+
+/* Ride list styles */
+.ride-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ride-card {
+  padding: 20px;
+  border: 1px solid #e3f2fd;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ride-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.ride-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ride-header h3 {
+  margin: 0;
+  color: #2d6cdf;
+  font-size: 1.1rem;
+}
+
+.ride-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ride-location {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.location-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.location-icon {
+  font-size: 1.2rem;
+  width: 20px;
+  text-align: center;
+}
+
+.ride-fare {
+  padding: 8px 12px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8px;
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.ride-date {
+  font-size: 0.9rem;
+  color: #666;
+}
+
 @media (max-width: 768px) {
   .app-container {
     padding: 10px;
   }
-  
+
   nav {
     flex-direction: column;
     padding: 12px 16px;
     gap: 12px;
   }
-  
+
   .hero-card h1 {
     font-size: 2rem;
   }
-  
+
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .flex-row {
     flex-direction: column;
   }

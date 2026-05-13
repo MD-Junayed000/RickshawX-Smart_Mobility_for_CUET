@@ -10,7 +10,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    ports: 
+    ports:
       - "5672:5672"
       - "15672:15672"
     environment:
@@ -23,11 +23,11 @@ services:
     environment:
       - PORT=3000
       - MONGO_URL=mongodb://mongo:27017/auth_db
-      - JWT_SECRET=mySuperSecret            # or ${JWT_SECRET} from .env
+      - JWT_SECRET=mySuperSecret # or ${JWT_SECRET} from .env
     depends_on:
       - mongo
     ports:
-      - "3001:3000"        # host 3001 → container 3000
+      - "3001:3000" # host 3001 → container 3000
 
   # --- Trip service ---
   trip:
@@ -44,3 +44,57 @@ services:
       - rabbitmq
     ports:
       - "3004:3004"
+
+  # --- Ride service ---
+  ride:
+    build: ./services/ride
+    environment:
+      - PORT=3002
+      - MONGO_URL=mongodb://mongo:27017/ride_db
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - JWT_SECRET=mySuperSecret
+    depends_on:
+      - mongo
+      - rabbitmq
+    ports:
+      - "3002:3002"
+
+  # --- Payment service ---
+  payment:
+    build: ./services/payment
+    environment:
+      - PORT=3003
+      - MONGO_URL=mongodb://mongo:27017/payment_db
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      - mongo
+      - rabbitmq
+    ports:
+      - "3003:3003"
+
+  # --- Notification service ---
+  notification:
+    build: ./services/notification
+    environment:
+      - PORT=3005
+      - MONGO_URL=mongodb://mongo:27017/notification_db
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+    depends_on:
+      - mongo
+      - rabbitmq
+    ports:
+      - "3005:3005"
+
+  # --- Frontend ---
+  frontend:
+    build: ./frontend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - auth
+      - ride
+      - trip
+      - payment
+      - notification
+    ports:
+      - "5173:5173"

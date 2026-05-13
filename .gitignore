@@ -1,7 +1,7 @@
 # Ignore environment files
 .env
 .env.*
-
+.venv
 # Ignore node_modules in all services and frontend
 **/node_modules
 

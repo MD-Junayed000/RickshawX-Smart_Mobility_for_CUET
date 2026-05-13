@@ -1,17 +1,20 @@
-const Trip = require('../models/trip');
-const redis = require('../cache/redis');
-const rabbitmq = require('../config/rabbitmq');
-const { v4: uuidv4 } = require('uuid');
+const Trip = require("../models/trip");
+const redis = require("../cache/redis");
+const rabbitmq = require("../config/rabbitmq");
+const { v4: uuidv4 } = require("uuid");
 
 // Helper function to calculate distance between two points
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
   const R = 6371; // Earth's radius in kilometers
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
 
@@ -20,14 +23,15 @@ const calculateFare = (distance, duration) => {
   const baseFare = 20; // Base fare in BDT
   const perKmRate = 15; // Rate per kilometer
   const perMinuteRate = 2; // Rate per minute
-  
-  return baseFare + (distance * perKmRate) + (duration * perMinuteRate);
+
+  return baseFare + distance * perKmRate + duration * perMinuteRate;
 };
 
 // Create a new trip
 const createTrip = async (req, res) => {
   try {
-    const { userId, driverId, rideId, pickupLocation, dropoffLocation } = req.body;
+    const { userId, driverId, rideId, pickupLocation, dropoffLocation } =
+      req.body;
 
     // Check cache first
     const cacheKey = `trip:${rideId}`;
@@ -42,7 +46,7 @@ const createTrip = async (req, res) => {
       rideId,
       pickupLocation,
       dropoffLocation,
-      status: 'pending'
+      status: "pending",
     });
 
     await trip.save();
@@ -51,26 +55,27 @@ const createTrip = async (req, res) => {
     await redis.set(cacheKey, trip, 1800); // 30 minutes TTL
 
     // Publish trip created event
-    await rabbitmq.publishEvent('trip_events', 'trip.created', {
+    await rabbitmq.publishEvent("trip_events", "trip.created", {
+      type: "trip.created",
       tripId: trip.tripId,
       userId,
       driverId,
       rideId,
       status: trip.status,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     res.status(201).json({
       success: true,
-      message: 'Trip created successfully',
-      data: trip
+      message: "Trip created successfully",
+      data: trip,
     });
   } catch (error) {
-    console.error('Create trip error:', error);
+    console.error("Create trip error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create trip',
-      error: error.message
+      message: "Failed to create trip",
+      error: error.message,
     });
   }
 };
@@ -89,19 +94,19 @@ const startTrip = async (req, res) => {
       if (!trip) {
         return res.status(404).json({
           success: false,
-          message: 'Trip not found'
+          message: "Trip not found",
         });
       }
     }
 
-    if (trip.status !== 'pending') {
+    if (trip.status !== "pending") {
       return res.status(400).json({
         success: false,
-        message: 'Trip cannot be started. Current status: ' + trip.status
+        message: "Trip cannot be started. Current status: " + trip.status,
       });
     }
 
-    trip.status = 'started';
+    trip.status = "started";
     trip.startTime = new Date();
     await trip.save();
 
@@ -109,25 +114,26 @@ const startTrip = async (req, res) => {
     await redis.set(cacheKey, trip, 1800);
 
     // Publish trip started event
-    await rabbitmq.publishEvent('trip_events', 'trip.started', {
+    await rabbitmq.publishEvent("trip_events", "trip.started", {
+      type: "trip.started",
       tripId: trip.tripId,
       userId: trip.userId,
       driverId: trip.driverId,
       startTime: trip.startTime,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     res.status(200).json({
       success: true,
-      message: 'Trip started successfully',
-      data: trip
+      message: "Trip started successfully",
+      data: trip,
     });
   } catch (error) {
-    console.error('Start trip error:', error);
+    console.error("Start trip error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to start trip',
-      error: error.message
+      message: "Failed to start trip",
+      error: error.message,
     });
   }
 };
@@ -147,19 +153,19 @@ const endTrip = async (req, res) => {
       if (!trip) {
         return res.status(404).json({
           success: false,
-          message: 'Trip not found'
+          message: "Trip not found",
         });
       }
     }
 
-    if (trip.status !== 'started') {
+    if (trip.status !== "started") {
       return res.status(400).json({
         success: false,
-        message: 'Trip cannot be ended. Current status: ' + trip.status
+        message: "Trip cannot be ended. Current status: " + trip.status,
       });
     }
 
-    trip.status = 'completed';
+    trip.status = "completed";
     trip.endTime = new Date();
     trip.dropoffLocation = endLocation || trip.dropoffLocation;
 
@@ -169,7 +175,7 @@ const endTrip = async (req, res) => {
       trip.pickupLocation.coordinates.lat,
       trip.pickupLocation.coordinates.lng,
       trip.dropoffLocation.coordinates.lat,
-      trip.dropoffLocation.coordinates.lng
+      trip.dropoffLocation.coordinates.lng,
     );
 
     trip.duration = duration;
@@ -182,7 +188,8 @@ const endTrip = async (req, res) => {
     await redis.set(cacheKey, trip, 1800);
 
     // Publish trip completed event
-    await rabbitmq.publishEvent('trip_events', 'trip.completed', {
+    await rabbitmq.publishEvent("trip_events", "trip.completed", {
+      type: "trip.completed",
       tripId: trip.tripId,
       userId: trip.userId,
       driverId: trip.driverId,
@@ -190,20 +197,20 @@ const endTrip = async (req, res) => {
       duration: trip.duration,
       distance: trip.distance,
       endTime: trip.endTime,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     res.status(200).json({
       success: true,
-      message: 'Trip completed successfully',
-      data: trip
+      message: "Trip completed successfully",
+      data: trip,
     });
   } catch (error) {
-    console.error('End trip error:', error);
+    console.error("End trip error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to end trip',
-      error: error.message
+      message: "Failed to end trip",
+      error: error.message,
     });
   }
 };
@@ -222,7 +229,7 @@ const getTrip = async (req, res) => {
       if (!trip) {
         return res.status(404).json({
           success: false,
-          message: 'Trip not found'
+          message: "Trip not found",
         });
       }
       // Cache the trip
@@ -231,14 +238,14 @@ const getTrip = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: trip
+      data: trip,
     });
   } catch (error) {
-    console.error('Get trip error:', error);
+    console.error("Get trip error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get trip',
-      error: error.message
+      message: "Failed to get trip",
+      error: error.message,
     });
   }
 };
@@ -268,15 +275,15 @@ const getUserTrips = async (req, res) => {
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(count / limit),
-        totalTrips: count
-      }
+        totalTrips: count,
+      },
     });
   } catch (error) {
-    console.error('Get user trips error:', error);
+    console.error("Get user trips error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get user trips',
-      error: error.message
+      message: "Failed to get user trips",
+      error: error.message,
     });
   }
 };
@@ -290,7 +297,7 @@ const rateTrip = async (req, res) => {
     if (rating < 1 || rating > 5) {
       return res.status(400).json({
         success: false,
-        message: 'Rating must be between 1 and 5'
+        message: "Rating must be between 1 and 5",
       });
     }
 
@@ -298,14 +305,14 @@ const rateTrip = async (req, res) => {
     if (!trip) {
       return res.status(404).json({
         success: false,
-        message: 'Trip not found'
+        message: "Trip not found",
       });
     }
 
-    if (trip.status !== 'completed') {
+    if (trip.status !== "completed") {
       return res.status(400).json({
         success: false,
-        message: 'Can only rate completed trips'
+        message: "Can only rate completed trips",
       });
     }
 
@@ -317,26 +324,27 @@ const rateTrip = async (req, res) => {
     await redis.del(`trip:${tripId}`);
 
     // Publish trip rated event
-    await rabbitmq.publishEvent('trip_events', 'trip.rated', {
+    await rabbitmq.publishEvent("trip_events", "trip.rated", {
+      type: "trip.rated",
       tripId: trip.tripId,
       userId: trip.userId,
       driverId: trip.driverId,
       rating,
       review,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     res.status(200).json({
       success: true,
-      message: 'Trip rated successfully',
-      data: trip
+      message: "Trip rated successfully",
+      data: trip,
     });
   } catch (error) {
-    console.error('Rate trip error:', error);
+    console.error("Rate trip error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to rate trip',
-      error: error.message
+      message: "Failed to rate trip",
+      error: error.message,
     });
   }
 };
@@ -350,42 +358,43 @@ const cancelTrip = async (req, res) => {
     if (!trip) {
       return res.status(404).json({
         success: false,
-        message: 'Trip not found'
+        message: "Trip not found",
       });
     }
 
-    if (trip.status !== 'pending') {
+    if (trip.status !== "pending") {
       return res.status(400).json({
         success: false,
-        message: 'Can only cancel pending trips'
+        message: "Can only cancel pending trips",
       });
     }
 
-    trip.status = 'cancelled';
+    trip.status = "cancelled";
     await trip.save();
 
     // Clear cache
     await redis.del(`trip:${tripId}`);
 
     // Publish trip cancelled event
-    await rabbitmq.publishEvent('trip_events', 'trip.cancelled', {
+    await rabbitmq.publishEvent("trip_events", "trip.cancelled", {
+      type: "trip.cancelled",
       tripId: trip.tripId,
       userId: trip.userId,
       driverId: trip.driverId,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     res.status(200).json({
       success: true,
-      message: 'Trip cancelled successfully',
-      data: trip
+      message: "Trip cancelled successfully",
+      data: trip,
     });
   } catch (error) {
-    console.error('Cancel trip error:', error);
+    console.error("Cancel trip error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to cancel trip',
-      error: error.message
+      message: "Failed to cancel trip",
+      error: error.message,
     });
   }
 };
@@ -397,5 +406,5 @@ module.exports = {
   getTrip,
   getUserTrips,
   rateTrip,
-  cancelTrip
-}; 
+  cancelTrip,
+};
