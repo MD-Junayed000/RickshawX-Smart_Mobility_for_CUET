@@ -1,31 +1,80 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { apiFetch } from "../../services/api";
 
 export default function NotificationList() {
-  // Placeholder for notification integration
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const { user } = useAuth();
+
+  const fetchNotifications = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const res = await apiFetch(`/notification/user/${user.id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setNotifications(data);
+      } else {
+        setError(data.error || "Failed to fetch notifications");
+      }
+    } catch (err) {
+      setError("Network error");
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const handler = () => fetchNotifications();
+    window.addEventListener("rickshawx:refresh", handler);
+    return () => window.removeEventListener("rickshawx:refresh", handler);
+  }, [user?.id]);
+
   return (
     <div className="card">
-      <h3>🔔 Notifications</h3>
-      <div
-        style={{
-          textAlign: "center",
-          padding: "40px 20px",
-          color: "#666",
-          background: "rgba(255, 255, 255, 0.5)",
-          borderRadius: "8px",
-          border: "2px dashed #e3f2fd",
-        }}
-      >
-        <div style={{ fontSize: "3rem", marginBottom: "16px" }}>📱</div>
-        <p style={{ margin: "0 0 16px 0", fontWeight: "600" }}>
-          Notification Center
-        </p>
-        <p style={{ margin: 0, fontSize: "0.9rem" }}>
-          Stay updated with ride status, payments, and important announcements.
-        </p>
-        <p style={{ margin: "16px 0 0 0", fontSize: "0.8rem", color: "#999" }}>
-          (Coming soon)
-        </p>
+      <div className="card-header">
+        <div>
+          <h2>Notifications</h2>
+          <p className="muted">Recent activity across rides and payments.</p>
+        </div>
+        <button className="ghost" type="button" onClick={fetchNotifications}>
+          Refresh
+        </button>
       </div>
+
+      {loading && <div className="empty">Loading notifications...</div>}
+
+      {!loading && error && <div className="message error">{error}</div>}
+
+      {!loading && !error && notifications.length === 0 && (
+        <div className="empty">
+          <h3>No notifications yet</h3>
+          <p className="muted">Create a ride to see events here.</p>
+        </div>
+      )}
+
+      {!loading && !error && notifications.length > 0 && (
+        <div className="notification-list">
+          {notifications.map((item) => (
+            <div key={item.notificationId} className="notification-item">
+              <div>
+                <h4>{item.title}</h4>
+                <p>{item.message}</p>
+              </div>
+              <span className="muted">
+                {new Date(item.createdAt).toLocaleString()}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

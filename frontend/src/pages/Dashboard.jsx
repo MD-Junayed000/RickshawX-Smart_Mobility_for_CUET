@@ -10,63 +10,31 @@ export default function Dashboard() {
   return (
     <div>
       <div className="hero-card">
-        <h1>Welcome to CUETxRIDES 🚀</h1>
-        <p>
-          Smart Mobility for CUET Campus (2050):
-          <br />
-          Book rides, manage trips, pay digitally, and get notified — all in one
-          beautiful, simple app.
-        </p>
-        <img
-          src="https://img.icons8.com/color/120/000000/rickshaw.png"
-          alt="Rickshaw"
-          style={{
-            margin: "24px 0",
-            filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.1))",
-          }}
-        />
-      </div>
-
-      <div className="features-grid">
-        <div className="feature-item">
-          <h3>🚀 Quick Booking</h3>
+        <div className="hero-content">
+          <h1>CUETxRIDES</h1>
           <p>
-            Book your ride in seconds with our intuitive interface. Pick your
-            pickup and dropoff locations easily.
+            Smart mobility for the CUET campus. Book rides, manage trips, and
+            confirm payments with real-time updates.
           </p>
-        </div>
-
-        <div className="feature-item">
-          <h3>💳 Digital Payments</h3>
-          <p>
-            Pay securely with digital payments. No more cash hassles -
-            everything is digital and traceable.
-          </p>
-        </div>
-
-        <div className="feature-item">
-          <h3>📱 Real-time Tracking</h3>
-          <p>
-            Track your ride in real-time. Know exactly when your rickshaw will
-            arrive and reach your destination.
-          </p>
-        </div>
-
-        <div className="feature-item">
-          <h3>⭐ Rate & Review</h3>
-          <p>
-            Rate your experience and help improve our service. Your feedback
-            matters to us.
-          </p>
+          <div className="hero-meta">
+            Signed in as <strong>{user?.name || user?.email}</strong>
+          </div>
         </div>
       </div>
 
-      <div className="card">
-        <h2>CUETxRIDES Dashboard</h2>
-        <p style={{ color: "#666", marginBottom: 0 }}>
-          Welcome back, <strong>{user?.name}</strong>! Manage your rides, track
-          trips, and stay updated with notifications.
-        </p>
+      <div className="info-grid">
+        <div className="info-card">
+          <h3>Ride lifecycle</h3>
+          <p>Request, start, and complete trips from one place.</p>
+        </div>
+        <div className="info-card">
+          <h3>Payments and alerts</h3>
+          <p>Fare and payment status sync across services.</p>
+        </div>
+        <div className="info-card">
+          <h3>Event-driven</h3>
+          <p>RabbitMQ connects trips, payments, and notifications.</p>
+        </div>
       </div>
 
       <div className="dashboard-grid">

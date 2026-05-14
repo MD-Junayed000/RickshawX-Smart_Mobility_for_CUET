@@ -85,16 +85,30 @@ services:
     ports:
       - "3005:3005"
 
-  # --- Frontend ---
-  frontend:
-    build: ./frontend
-    environment:
-      - CHOKIDAR_USEPOLLING=true
+  # --- API Gateway ---
+  gateway:
+    build: ./gateway
     depends_on:
       - auth
       - ride
       - trip
       - payment
       - notification
+    ports:
+      - "8080:8080"
+
+  # --- Frontend ---
+  frontend:
+    build: ./frontend
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VITE_API_BASE_URL=http://localhost:8080
+    depends_on:
+      - auth
+      - ride
+      - trip
+      - payment
+      - notification
+      - gateway
     ports:
       - "5173:5173"

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { apiFetch, withAuth } from "../../services/api";
 
 export default function TripCreate() {
   const [origin, setOrigin] = useState("");
@@ -15,20 +16,62 @@ export default function TripCreate() {
     setMessage("");
 
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3002/ride", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ origin, destination }),
-      });
+      const res = await apiFetch(
+        "/ride",
+        withAuth({
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ origin, destination }),
+        }),
+      );
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("Ride created successfully!");
-        setMessageType("success");
+        const userId = user?.id || user?.email || "user-demo";
+        const driverId = "driver-demo";
+
+        await apiFetch(
+          `/ride/${data.rideId}/accept`,
+          withAuth({
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ driverId }),
+          }),
+        );
+
+        const pickupLocation = {
+          address: origin,
+          coordinates: { lat: 22.459, lng: 91.969 },
+        };
+        const dropoffLocation = {
+          address: destination,
+          coordinates: { lat: 22.463, lng: 91.965 },
+        };
+
+        const tripRes = await apiFetch("/trip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            driverId,
+            rideId: data.rideId,
+            pickupLocation,
+            dropoffLocation,
+          }),
+        });
+
+        if (tripRes.ok) {
+          setMessage("Ride and trip created. Start or end the trip below.");
+          setMessageType("success");
+          window.dispatchEvent(new Event("rickshawx:refresh"));
+        } else {
+          const tripError = await tripRes.json();
+          setMessage(tripError.message || "Trip creation failed");
+          setMessageType("error");
+        }
+
         setOrigin("");
         setDestination("");
       } else {
@@ -44,23 +87,16 @@ export default function TripCreate() {
 
   return (
     <div className="card">
-      <h2>🚗 Book a Ride</h2>
-      <p style={{ color: "#666", marginBottom: "24px" }}>
-        Create a new ride request
-      </p>
+      <div className="card-header">
+        <div>
+          <h2>Book a ride</h2>
+          <p className="muted">Create a ride and initialize a trip.</p>
+        </div>
+      </div>
 
       <form className="flex-col" onSubmit={handleSubmit}>
         <div>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontWeight: "600",
-              color: "#2d6cdf",
-            }}
-          >
-            Pickup Location
-          </label>
+          <label className="form-label">Pickup location</label>
           <input
             type="text"
             placeholder="Enter pickup location"
@@ -71,16 +107,7 @@ export default function TripCreate() {
         </div>
 
         <div>
-          <label
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              fontWeight: "600",
-              color: "#2d6cdf",
-            }}
-          >
-            Destination
-          </label>
+          <label className="form-label">Destination</label>
           <input
             type="text"
             placeholder="Enter destination"
@@ -90,25 +117,14 @@ export default function TripCreate() {
           />
         </div>
 
-        {message && (
-          <div
-            style={{
-              padding: "12px",
-              borderRadius: "8px",
-              background:
-                messageType === "success"
-                  ? "rgba(76, 175, 80, 0.1)"
-                  : "rgba(244, 67, 54, 0.1)",
-              color: messageType === "success" ? "#2e7d32" : "#d32f2f",
-              border: `1px solid ${messageType === "success" ? "#4caf50" : "#f44336"}`,
-              textAlign: "center",
-            }}
-          >
-            {message}
-          </div>
-        )}
+        {message && <div className={`message ${messageType}`}>{message}</div>}
 
-        <button type="submit" disabled={loading}>
+        <div className="fare-note">
+          <span className="label">Fare model</span>
+          <p>Base BDT 20 + BDT 15 per km + BDT 2 per minute.</p>
+        </div>
+
+        <button type="submit" disabled={loading} className="primary">
           {loading ? "Creating Ride..." : "Book Now"}
         </button>
       </form>

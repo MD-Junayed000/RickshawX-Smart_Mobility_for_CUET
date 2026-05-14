@@ -104,14 +104,9 @@ const initialize = async () => {
     await mongoose.connect(cfg.mongoUrl);
     console.log("MongoDB connected for notification service");
 
-    try {
-      await rabbitmq.connect();
-      await rabbitmq.consumeEvents("notification_queue", handleEvent);
-    } catch (error) {
-      console.log(
-        "WARN: RabbitMQ connection failed, continuing without messaging",
-      );
-    }
+    rabbitmq.connectWithRetry(() =>
+      rabbitmq.consumeEvents("notification_queue", handleEvent),
+    );
 
     app.listen(cfg.port, () => {
       console.log(

@@ -6,6 +6,7 @@ let channel;
 let isConnected = false;
 
 const connect = async () => {
+  if (isConnected) return;
   try {
     connection = await amqp.connect(cfg.rabbitmqUrl);
     channel = await connection.createChannel();
@@ -23,6 +24,16 @@ const connect = async () => {
     );
     isConnected = false;
   }
+};
+
+const connectWithRetry = (delayMs = 5000) => {
+  const attempt = async () => {
+    await connect();
+    if (isConnected) return;
+    setTimeout(attempt, delayMs);
+  };
+
+  attempt();
 };
 
 const publishEvent = async (exchange, routingKey, message) => {
@@ -46,6 +57,7 @@ const publishEvent = async (exchange, routingKey, message) => {
 
 module.exports = {
   connect,
+  connectWithRetry,
   publishEvent,
   channel: () => channel,
   isConnected: () => isConnected,

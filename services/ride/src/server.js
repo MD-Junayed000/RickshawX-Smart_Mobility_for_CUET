@@ -39,14 +39,10 @@ app.put("/ride/:rideId/accept", authMiddleware, rideController.acceptRide);
 mongoose
   .connect(cfg.mongoUrl)
   .then(() => {
-    console.log("🟢 Mongo connected");
-    rabbitmq.connect().catch(() => {
-      console.log(
-        "⚠️ RabbitMQ connection failed, continuing without messaging",
-      );
-    });
+    console.log("Mongo connected");
+    rabbitmq.connectWithRetry();
     app.listen(cfg.port, () =>
-      console.log(`🚀 Ride service running on http://localhost:${cfg.port}`),
+      console.log(`Ride service running on http://localhost:${cfg.port}`),
     );
   })
-  .catch((err) => console.error("🔴 Mongo error", err));
+  .catch((err) => console.error("Mongo error", err));

@@ -106,14 +106,9 @@ const initialize = async () => {
     await mongoose.connect(cfg.mongoUrl);
     console.log("MongoDB connected for payment service");
 
-    try {
-      await rabbitmq.connect();
-      await rabbitmq.consumeEvents("payment_trip_queue", handleTripEvent);
-    } catch (error) {
-      console.log(
-        "WARN: RabbitMQ connection failed, continuing without messaging",
-      );
-    }
+    rabbitmq.connectWithRetry(() =>
+      rabbitmq.consumeEvents("payment_trip_queue", handleTripEvent),
+    );
 
     app.listen(cfg.port, () => {
       console.log(`Payment service running on http://localhost:${cfg.port}`);

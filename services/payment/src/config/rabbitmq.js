@@ -6,6 +6,7 @@ let channel;
 let isConnected = false;
 
 const connect = async () => {
+  if (isConnected) return;
   try {
     connection = await amqp.connect(cfg.rabbitmqUrl);
     channel = await connection.createChannel();
@@ -25,6 +26,25 @@ const connect = async () => {
     );
     isConnected = false;
   }
+};
+
+const connectWithRetry = (onConnected, delayMs = 5000) => {
+  const attempt = async () => {
+    await connect();
+    if (isConnected) {
+      if (onConnected) {
+        try {
+          await onConnected();
+        } catch (error) {
+          console.log("Error during RabbitMQ setup:", error.message);
+        }
+      }
+      return;
+    }
+    setTimeout(attempt, delayMs);
+  };
+
+  attempt();
 };
 
 const publishEvent = async (exchange, routingKey, message) => {
@@ -74,6 +94,7 @@ const consumeEvents = async (queue, callback) => {
 
 module.exports = {
   connect,
+  connectWithRetry,
   publishEvent,
   consumeEvents,
   channel: () => channel,

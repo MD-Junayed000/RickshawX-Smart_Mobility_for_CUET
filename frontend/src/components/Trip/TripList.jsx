@@ -1,60 +1,79 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { apiFetch } from "../../services/api";
 
 export default function TripList() {
-  const [rides, setRides] = useState([]);
+  const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionId, setActionId] = useState(null);
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchRides();
-  }, []);
+  const fetchTrips = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
 
-  const fetchRides = async () => {
+    setLoading(true);
+    setError("");
+
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3002/ride/user/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await apiFetch(`/trip/user/${user.id}`);
       const data = await res.json();
-
       if (res.ok) {
-        setRides(data);
+        setTrips(data.data || data);
       } else {
-        setError(data.error || "Failed to fetch rides");
+        setError(data.message || "Failed to fetch trips");
       }
     } catch (err) {
       setError("Network error");
     }
+
     setLoading(false);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "status-pending";
-      case "accepted":
-        return "status-accepted";
-      case "completed":
-        return "status-completed";
-      case "cancelled":
-        return "status-cancelled";
-      default:
-        return "status-pending";
-    }
+  useEffect(() => {
+    fetchTrips();
+    const handler = () => fetchTrips();
+    window.addEventListener("rickshawx:refresh", handler);
+    return () => window.removeEventListener("rickshawx:refresh", handler);
+  }, [user?.id]);
+
+  const startTrip = async (tripId) => {
+    setActionId(tripId);
+    await apiFetch(`/trip/${tripId}/start`, { method: "PUT" });
+    await fetchTrips();
+    setActionId(null);
+  };
+
+  const endTrip = async (tripId, fallbackLocation) => {
+    setActionId(tripId);
+    await apiFetch(`/trip/${tripId}/end`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endLocation: fallbackLocation }),
+    });
+    await fetchTrips();
+    window.dispatchEvent(new Event("rickshawx:refresh"));
+    setActionId(null);
+  };
+
+  const formatDate = (value) => {
+    if (!value) return "-";
+    return new Date(value).toLocaleString();
   };
 
   if (loading) {
     return (
       <div className="card">
-        <h2>🚗 My Rides</h2>
-        <div style={{ textAlign: "center", padding: "40px" }}>
-          <div style={{ fontSize: "24px", marginBottom: "16px" }}>⏳</div>
-          <p>Loading your rides...</p>
+        <div className="card-header">
+          <div>
+            <h2>Trips</h2>
+            <p className="muted">Loading trip activity.</p>
+          </div>
         </div>
+        <div className="empty">Loading data...</div>
       </div>
     );
   }
@@ -62,76 +81,112 @@ export default function TripList() {
   if (error) {
     return (
       <div className="card">
-        <h2>🚗 My Rides</h2>
-        <div
-          style={{
-            padding: "16px",
-            borderRadius: "8px",
-            background: "rgba(244, 67, 54, 0.1)",
-            color: "#d32f2f",
-            border: "1px solid #f44336",
-            textAlign: "center",
-          }}
-        >
-          {error}
+        <div className="card-header">
+          <div>
+            <h2>Trips</h2>
+            <p className="muted">Trip activity</p>
+          </div>
         </div>
+        <div className="message error">{error}</div>
       </div>
     );
   }
 
   return (
     <div className="card">
-      <h2>🚗 My Rides</h2>
-      <p style={{ color: "#666", marginBottom: "24px" }}>
-        View your ride history
-      </p>
+      <div className="card-header">
+        <div>
+          <h2>Trips</h2>
+          <p className="muted">Start or end a trip to compute fare.</p>
+        </div>
+        <button className="ghost" onClick={fetchTrips} type="button">
+          Refresh
+        </button>
+      </div>
 
-      {rides.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px" }}>
-          <div style={{ fontSize: "48px", marginBottom: "16px" }}>🚗</div>
-          <h3>No rides yet</h3>
-          <p style={{ color: "#666" }}>Book your first ride to get started!</p>
+      {trips.length === 0 ? (
+        <div className="empty">
+          <h3>No trips yet</h3>
+          <p className="muted">Create a ride to initialize a trip.</p>
         </div>
       ) : (
-        <div className="ride-list">
-          {rides.map((ride) => (
-            <div key={ride.rideId} className="ride-card">
-              <div className="ride-header">
-                <h3>Ride #{ride.rideId.slice(0, 8)}</h3>
-                <span className={`status-badge ${getStatusColor(ride.status)}`}>
-                  {ride.status}
-                </span>
-              </div>
-
-              <div className="ride-details">
-                <div className="ride-location">
-                  <div className="location-item">
-                    <span className="location-icon">📍</span>
-                    <div>
-                      <strong>From:</strong> {ride.origin}
-                    </div>
+        <div className="trip-list">
+          {trips.map((trip) => {
+            const canStart = trip.status === "pending";
+            const canEnd = trip.status === "started";
+            return (
+              <div key={trip.tripId} className="trip-card">
+                <div className="trip-header">
+                  <div>
+                    <h3>Trip {trip.tripId.slice(0, 8)}</h3>
+                    <p className="muted">Ride {trip.rideId}</p>
                   </div>
-                  <div className="location-item">
-                    <span className="location-icon">🎯</span>
-                    <div>
-                      <strong>To:</strong> {ride.destination}
-                    </div>
+                  <span className={`status-badge status-${trip.status}`}>
+                    {trip.status}
+                  </span>
+                </div>
+
+                <div className="trip-details">
+                  <div>
+                    <div className="label">Pickup</div>
+                    <div>{trip.pickupLocation?.address || "-"}</div>
+                  </div>
+                  <div>
+                    <div className="label">Dropoff</div>
+                    <div>{trip.dropoffLocation?.address || "-"}</div>
+                  </div>
+                  <div>
+                    <div className="label">Created</div>
+                    <div>{formatDate(trip.createdAt)}</div>
                   </div>
                 </div>
 
-                {ride.fare && (
-                  <div className="ride-fare">
-                    <strong>Fare:</strong> ৳{ride.fare}
+                <div className="trip-meta">
+                  <div>
+                    <span className="label">Fare</span>
+                    <strong>
+                      {trip.fare ? `BDT ${trip.fare.toFixed(2)}` : "-"}
+                    </strong>
                   </div>
-                )}
+                  <div>
+                    <span className="label">Payment</span>
+                    <strong>{trip.paymentStatus || "pending"}</strong>
+                  </div>
+                  <div>
+                    <span className="label">Duration</span>
+                    <strong>
+                      {trip.duration ? `${trip.duration} min` : "-"}
+                    </strong>
+                  </div>
+                </div>
 
-                <div className="ride-date">
-                  <strong>Booked:</strong>{" "}
-                  {new Date(ride.createdAt).toLocaleDateString()}
+                <div className="trip-actions">
+                  {canStart && (
+                    <button
+                      className="primary"
+                      type="button"
+                      onClick={() => startTrip(trip.tripId)}
+                      disabled={actionId === trip.tripId}
+                    >
+                      Start trip
+                    </button>
+                  )}
+                  {canEnd && (
+                    <button
+                      className="primary"
+                      type="button"
+                      onClick={() =>
+                        endTrip(trip.tripId, trip.dropoffLocation || null)
+                      }
+                      disabled={actionId === trip.tripId}
+                    >
+                      End trip
+                    </button>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

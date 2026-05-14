@@ -17,6 +17,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host "RickshawX services are starting in the background."
 Write-Host ""
+Write-Host "Gateway:        http://localhost:8080"
 Write-Host "Frontend:       http://localhost:5173"
 Write-Host "Auth health:    http://localhost:3001/health"
 Write-Host "Ride health:    http://localhost:3002/health"

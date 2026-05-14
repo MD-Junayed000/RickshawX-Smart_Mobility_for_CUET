@@ -1,7 +1,6 @@
 import React from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Login from "./components/Auth/Login";
@@ -19,19 +18,9 @@ function Navbar() {
       <div>
         {isLoggedIn ? (
           <>
-            <span style={{ color: "#ffe082", marginRight: "16px" }}>
-              Welcome, {user?.name || "User"}!
-            </span>
+            <span className="nav-user">{user?.name || user?.email}</span>
             <Link to="/dashboard">Dashboard</Link>
-            <button
-              onClick={logout}
-              style={{
-                background: "transparent",
-                color: "#fff",
-                border: "1px solid #fff",
-                marginLeft: "16px",
-              }}
-            >
+            <button onClick={logout} className="ghost">
               Logout
             </button>
           </>
@@ -47,8 +36,6 @@ function Navbar() {
 }
 
 function AppContent() {
-  const { isLoggedIn } = useAuth();
-
   return (
     <div>
       <Navbar />
