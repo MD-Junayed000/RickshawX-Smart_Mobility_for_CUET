@@ -13,7 +13,8 @@ function Navbar() {
   return (
     <nav>
       <div className="brand">
-        CUET<span>x</span>RIDES
+        <img src="/CUET_Vector_Logo.png" alt="CUET Logo" className="brand-logo" />
+        RickshawX
       </div>
       <div>
         {isLoggedIn ? (

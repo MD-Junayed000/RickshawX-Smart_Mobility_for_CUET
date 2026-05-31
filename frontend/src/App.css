@@ -77,6 +77,12 @@ nav .brand span {
   color: #a7c8ff;
 }
 
+nav .brand-logo {
+  height: 36px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
 nav a {
   color: #f7f9fc;
   margin: 0 10px;
