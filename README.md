@@ -103,7 +103,7 @@ The Nginx API gateway runs on port **8080** and acts as the single entry point f
 
 The gateway handles all CORS:
 
-- **Allowed Origins:** Dynamic (reflects `$http_origin`)
+- **Allowed Origins:** Validated against an allowlist (`localhost:5173`, `localhost:5174`, `localhost:8080`)
 - **Allowed Methods:** `GET, POST, PUT, PATCH, DELETE, OPTIONS`
 - **Allowed Headers:** `Authorization, Content-Type`
 - **Credentials:** Enabled
@@ -138,6 +138,8 @@ http://localhost:8081
 - **Username:** `admin`
 - **Password:** `admin`
 
+> **Note:** These default credentials are for local development only. If you deploy this stack to a shared or production environment, change the `ME_CONFIG_BASICAUTH_USERNAME` and `ME_CONFIG_BASICAUTH_PASSWORD` values in `docker-compose.yml` to strong, unique credentials.
+
 You can browse all 5 databases, view collections, inspect documents, and run queries directly in the browser.
 
 #### Option 2: MongoDB Compass (Desktop App)
@@ -153,7 +155,7 @@ This gives you a full GUI for exploring databases, running aggregations, and ana
 #### Option 3: MongoDB Shell (CLI)
 
 ```bash
-docker exec -it rickshawx-smart_mobility_for_cuet-mongo-1 mongosh
+docker compose exec mongo mongosh
 ```
 
 Once inside the shell:
@@ -495,13 +497,13 @@ After running `docker compose up --build`, open [http://localhost:8081](http://l
 
 ```bash
 # View all users
-docker exec -it rickshawx-smart_mobility_for_cuet-mongo-1 mongosh --eval "use auth_db" --eval "db.users.find().pretty()"
+docker compose exec mongo mongosh --eval "use auth_db" --eval "db.users.find().pretty()"
 
 # View all rides
-docker exec -it rickshawx-smart_mobility_for_cuet-mongo-1 mongosh --eval "use ride_db" --eval "db.rides.find().pretty()"
+docker compose exec mongo mongosh --eval "use ride_db" --eval "db.rides.find().pretty()"
 
 # View all notifications
-docker exec -it rickshawx-smart_mobility_for_cuet-mongo-1 mongosh --eval "use notification_db" --eval "db.notifications.find().pretty()"
+docker compose exec mongo mongosh --eval "use notification_db" --eval "db.notifications.find().pretty()"
 ```
 
 ---
@@ -602,7 +604,7 @@ docker compose ps mongo
 docker compose logs mongo
 
 # Test connectivity from inside a service container
-docker exec -it rickshawx-smart_mobility_for_cuet-auth-1 sh -c "wget -qO- http://mongo:27017 || echo 'Cannot reach MongoDB'"
+docker compose exec auth sh -c "wget -qO- http://mongo:27017 || echo 'Cannot reach MongoDB'"
 ```
 
 ### RabbitMQ Connection Refused
